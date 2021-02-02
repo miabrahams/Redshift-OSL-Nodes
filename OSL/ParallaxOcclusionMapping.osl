@@ -1,8 +1,7 @@
 /*
-Version: 002
+Version: 001
 A Parallax Occlusion Mapping Shader based on the OpenGL tutorial by Joey de Vries (www.learnopengl.com /  https://twitter.com/JoeyDeVriez); permission for usage obtained.
 Translation to OSL written by Martin Geupel, www.racoon-artworks.de, 09/04/2018
-Updated by Darby Edelen for Redshift 3D. Use the rsState to output the tangent into the OSL node input. 1/30/21
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software (the "Software"), to use,
 copy, and/or distribute the software, subject to the following conditions:
@@ -44,15 +43,18 @@ shader ParallaxOcclusionMapping
     float depth_mult = 1.0
         [[ string label = "Depth Scale",
         string help = "Depth Multiplier",
-		float max = 50, float min = 0]],
+        float min = 0,
+        float max = 100]],
     int minLayers = 1
         [[ string label = "Min Samples",
         string help = "Minimum Samples",
-		int max = 25, int min = 1]],
+        int min = 1,
+        int max = 64]],
     int maxLayers = 8
         [[ string label = "Max Samples",
         string help = "Maximum Samples",
-		int max = 25, int min = 1]],
+        int min = 1,
+        int max = 64]],
     string WrapMode = "periodic"
         [[ string widget="popup", string options = "default|black|clamp|periodic|mirror",
         string label="Wrap Mode",
@@ -86,7 +88,7 @@ shader ParallaxOcclusionMapping
 
 
         // step 2
-        float numLayers = depth_mult * mix(float(maxLayers), float(minLayers), pow(abs(dot(vector(0.0, 0.0, 1.0), tangViewDir)),2));
+        float numLayers = min(512, depth_mult * mix(float(maxLayers), float(minLayers), pow(abs(dot(vector(0.0, 0.0, 1.0), tangViewDir)),2)));
         float layerDepth = 1.0 / numLayers;
         float currentLayerDepth = 0.0;
 
