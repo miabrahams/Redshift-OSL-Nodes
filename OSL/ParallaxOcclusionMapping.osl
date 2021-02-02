@@ -1,7 +1,8 @@
 /*
-Version: 001
+Version: 002
 A Parallax Occlusion Mapping Shader based on the OpenGL tutorial by Joey de Vries (www.learnopengl.com /  https://twitter.com/JoeyDeVriez); permission for usage obtained.
 Translation to OSL written by Martin Geupel, www.racoon-artworks.de, 09/04/2018
+Updated by Darby Edelen for Redshift 3D. Use the rsState to output the tangent into the OSL node input. 1/30/21
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software (the "Software"), to use,
 copy, and/or distribute the software, subject to the following conditions:
@@ -25,6 +26,11 @@ shader ParallaxOcclusionMapping
         [[ string label = "Heightmap",
         string help = "Texture map depth",
         string widget = "filename" ]],
+    float gamma = 1
+        [[ string label = "Gamma",
+        string widget = "number",
+        float min = 0.01,
+        float max = 10]],
     int invertHeightMap = 0
         [[ string label = "Invert Heightmap",
         string widget= "checkBox",
@@ -37,19 +43,22 @@ shader ParallaxOcclusionMapping
         string help = "Tangent Coordinates"]],
     float depth_mult = 1.0
         [[ string label = "Depth Scale",
-        string help = "Depth Multiplier"]],
+        string help = "Depth Multiplier",
+		float max = 50, float min = 0]],
     int minLayers = 1
         [[ string label = "Min Samples",
-        string help = "Minimum Samples"]],
+        string help = "Minimum Samples",
+		int max = 25, int min = 1]],
     int maxLayers = 8
         [[ string label = "Max Samples",
-        string help = "Maximum Samples"]],
+        string help = "Maximum Samples",
+		int max = 25, int min = 1]],
     string WrapMode = "periodic"
         [[ string widget="popup", string options = "default|black|clamp|periodic|mirror",
         string label="Wrap Mode",
         string help="How the height texture wraps: (black, clamp, periodic or mirror)." ]],
     int deactivate = 0
-        [[ string label = "Deactivate Parallax Occlusion Mapping",
+        [[ string label = "Bypass",
         string widget= "checkBox",
         string help = "Deactivate this checkbox to turn off any depth effects (node does nothing)"]],
 
@@ -87,15 +96,15 @@ shader ParallaxOcclusionMapping
         vector currentTexCoords = uvw;
         color depthTex = texture(heightTexMap, currentTexCoords[0], 1.0 - currentTexCoords[1], "wrap", WrapMode);
         float currentDepthMapValue;
-        if (invertHeightMap == 1) currentDepthMapValue = depthTex[0];
-        else currentDepthMapValue = 1.0 - depthTex[0];
+        if (invertHeightMap == 1) currentDepthMapValue = pow(depthTex[0], 1/gamma);
+        else currentDepthMapValue = 1.0 - pow(depthTex[0], 1/gamma);
 
 
         while (currentLayerDepth < currentDepthMapValue) {
             currentTexCoords -= deltaTexCoords; // shift texture coordinates
             color InnerdepthTex = texture(heightTexMap, currentTexCoords[0], 1.0 - currentTexCoords[1],  "wrap", WrapMode);  // get depthmap value at current texture coordinates
-            if (invertHeightMap == 1) currentDepthMapValue = InnerdepthTex[0];
-            else currentDepthMapValue = 1.0 - InnerdepthTex[0];
+            if (invertHeightMap == 1) currentDepthMapValue = pow(InnerdepthTex[0], 1/gamma);
+            else currentDepthMapValue = 1.0 - pow(InnerdepthTex[0], 1/gamma);
 
             currentLayerDepth += layerDepth; // get depth of next layer
         }
@@ -108,8 +117,8 @@ shader ParallaxOcclusionMapping
         float afterDepth  = currentDepthMapValue - currentLayerDepth;
         color depthMapBefore = texture(heightTexMap, prevTexCoords[0], 1.0 - prevTexCoords[1],  "wrap", WrapMode);
         float depthMapBeforeValue;
-        if (invertHeightMap == 1) depthMapBeforeValue = depthMapBefore[0];
-        else depthMapBeforeValue = 1.0 - depthMapBefore[0];
+        if (invertHeightMap == 1) depthMapBeforeValue = pow(depthMapBefore[0], 1/gamma);
+        else depthMapBeforeValue = 1.0 - pow(depthMapBefore[0], 1/gamma);
         float beforeDepth = depthMapBeforeValue - currentLayerDepth + layerDepth;
 
         // interpolation of texture coordinates
