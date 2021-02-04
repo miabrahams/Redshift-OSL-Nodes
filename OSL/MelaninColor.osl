@@ -14,5 +14,5 @@ float dyeMix = 0 [[float min = 0, float max = 1, string label = "Dye Mix"]],
 float w = max( pow(melanin, 2.0) * 33.0, 0.02);
 	color pheomelanin = exp(w * -vector(0.187, 0.4, 1.05));
 	color eumelanin = exp(w * -vector(0.419, 0.697, 1.37));
-		outColor = mix(mix(pheomelanin, eumelanin, redness), dyeColor, dyeMix);
+		outColor = mix(mix(eumelanin, pheomelanin, redness), dyeColor, dyeMix);
 }
